@@ -318,8 +318,8 @@
     var dec = Math.floor((ms % 1000) / 10);
     return s + '.' + (dec < 10 ? '0' + dec : dec) + ' sek';
   }
-  async function renderHiscores() {
-    var list = await getHiscores();
+  async function renderHiscores(listOverride) {
+    var list = listOverride || await getHiscores();
     var medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
     var goldSilverBronze = ['gold','silver','bronze','',''];
 
@@ -450,8 +450,8 @@
 
   async function saveName() {
     var name = document.getElementById('nameInput').value.trim() || 'Anonym';
-    await saveHiscore(name, elapsedMs);
-    await renderHiscores();
+    var list = await saveHiscore(name, elapsedMs);
+    await renderHiscores(list);
     document.getElementById('saveArea').style.display = 'none';
   }
 
