@@ -346,6 +346,8 @@
   }
 
   function resizeCanvas() {
+    // Android: tastaturet trigger resize — stop reset hvis overlay er fremme
+    if (doneOverlay.classList.contains('show')) return;
     var rect = container.getBoundingClientRect();
     canvas.width  = rect.width;
     canvas.height = rect.height;
