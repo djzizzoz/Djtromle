@@ -276,14 +276,37 @@
   let elapsedMs = 0;
   let gameStarted = false;
 
-  function getHiscores() {
+  // ── SKIFT disse to linjer til din egen JSONBin ──────────────────────────
+  var JSONBIN_ID  = '6a22b2a9f5f4af5e29bd6a43';
+  var JSONBIN_KEY = '$2a$10$o9VKzDNT4GWsQrDK/wuqQOWqzCy/WAWZzP5z4W0/eaq40MkJP5CCq';
+  // ────────────────────────────────────────────────────────────────────────
+  var JSONBIN_URL = 'https://api.jsonbin.io/v3/b/' + JSONBIN_ID;
+  var useCloud = (JSONBIN_ID !== 'DIN_BIN_ID_HER');
+
+  async function getHiscores() {
+    if (useCloud) {
+      try {
+        var res = await fetch(JSONBIN_URL + '/latest', { headers: { 'X-Master-Key': JSONBIN_KEY } });
+        var data = await res.json();
+        return data.record || [];
+      } catch(e) {}
+    }
     try { return JSON.parse(localStorage.getItem('solcreme_hiscores') || '[]'); } catch(e) { return []; }
   }
-  function saveHiscore(name, ms) {
-    var list = getHiscores();
+  async function saveHiscore(name, ms) {
+    var list = await getHiscores();
     list.push({ name: name, ms: ms, time: formatTime(ms) });
-    list.sort(function(a,b){ return a.ms - b.ms; }); // fastest first
+    list.sort(function(a,b){ return a.ms - b.ms; });
     list = list.slice(0, 5);
+    if (useCloud) {
+      try {
+        await fetch(JSONBIN_URL, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
+          body: JSON.stringify(list)
+        });
+      } catch(e) {}
+    }
     localStorage.setItem('solcreme_hiscores', JSON.stringify(list));
     return list;
   }
@@ -292,8 +315,8 @@
     var dec = Math.floor((ms % 1000) / 10);
     return s + '.' + (dec < 10 ? '0' + dec : dec) + ' sek';
   }
-  function renderHiscores() {
-    var list = getHiscores();
+  async function renderHiscores() {
+    var list = await getHiscores();
     var medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
     var goldSilverBronze = ['gold','silver','bronze','',''];
 
@@ -412,20 +435,20 @@
     progressPct.textContent = pct + '%';
   }
 
-  function celebrate() {
+  async function celebrate() {
     document.getElementById('finalTime').textContent = formatTime(elapsedMs);
     document.getElementById('nameInput').value = '';
-    renderHiscores();
+    await renderHiscores();
     doneOverlay.classList.add('show');
     hintText.textContent = '🎉 Fantastisk! Tromlen er beskyttet mod solen!';
     spawnConfetti();
     setTimeout(function(){ document.getElementById('nameInput').focus(); }, 400);
   }
 
-  function saveName() {
+  async function saveName() {
     var name = document.getElementById('nameInput').value.trim() || 'Anonym';
-    saveHiscore(name, elapsedMs);
-    renderHiscores();
+    await saveHiscore(name, elapsedMs);
+    await renderHiscores();
     document.getElementById('saveArea').style.display = 'none';
   }
 
