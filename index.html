@@ -3,7 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DJ Tromle 🥁 Officiel Hjemmeside</title>
+  <title>DJ Tromle – Børne-DJ til fødselsdagsfester, skolefester og events i Danmark</title>
+
+  <!-- SEO -->
+  <meta name="description" content="Book DJ Tromle – Danmarks sjoveste børne-DJ til fødselsdagsfester, skolefester og familiearrangementer. Fed musik, leg og dans for børn. Book nu på www.djtromle.dk!">
+  <meta name="keywords" content="DJ Tromle, børne-DJ, DJ til børnefest, fødselsdagsfeest DJ, børne DJ Danmark, DJ til skolefest, underholdning til børn, børneunderholdning Danmark, book børne-DJ, sjov DJ til fest">
+  <meta name="author" content="DJ Tromle">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#FFE135">
+  <link rel="canonical" href="https://www.djtromle.dk/">
+
+  <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
+  <meta property="og:title" content="DJ Tromle – Børne-DJ til fødselsdagsfester og events">
+  <meta property="og:description" content="Danmarks sjoveste børne-DJ! Fed musik og dans til fødselsdagsfester, skolefester og familiearrangementer. Book DJ Tromle nu!">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.djtromle.dk/">
+  <meta property="og:locale" content="da_DK">
+  <meta property="og:site_name" content="DJ Tromle">
+  <meta property="og:image" content="https://www.djtromle.dk/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter/X -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="DJ Tromle – Børne-DJ til fødselsdagsfester">
+  <meta name="twitter:description" content="Danmarks sjoveste børne-DJ! Book til fødselsdagsfester og events.">
+  <meta name="twitter:image" content="https://www.djtromle.dk/og-image.jpg">
+
+  <!-- Schema.org strukturerede data (hjælper Google forstå siden) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "MusicGroup",
+    "name": "DJ Tromle",
+    "url": "https://www.djtromle.dk",
+    "description": "Danmarks sjoveste børne-DJ til fødselsdagsfester, skolefester og familiearrangementer.",
+    "genre": ["Children's Music", "Dance Music", "Pop"],
+    "sameAs": ["https://www.djtromle.dk"],
+    "offers": {
+      "@type": "Offer",
+      "description": "DJ til børnefester og events",
+      "areaServed": "Danmark",
+      "availability": "https://schema.org/InStock"
+    }
+  }
+  </script>
+
   <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -847,22 +892,40 @@
     });
   });
 
+  var DRUM_FIREBASE = 'https://dj-tromle-default-rtdb.europe-west1.firebasedatabase.app/drum_hiscores.json';
+
   let score = 0;
   let best = parseInt(localStorage.getItem('djTromle_best') || '0');
   let popupOpen = false;
 
-  function getHiscores() {
+  async function getHiscores() {
+    try {
+      var res = await fetch(DRUM_FIREBASE);
+      var data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        localStorage.setItem('djTromle_hiscores', JSON.stringify(data));
+        return data;
+      }
+    } catch(e) {}
     try { return JSON.parse(localStorage.getItem('djTromle_hiscores') || '[]'); } catch(e) { return []; }
   }
-  function saveHiscore(name, sc) {
-    let list = getHiscores();
+  async function saveHiscore(name, sc) {
+    let list = await getHiscores();
     list.push({ name: name, score: sc });
     list.sort((a, b) => b.score - a.score);
     list = list.slice(0, 5);
     localStorage.setItem('djTromle_hiscores', JSON.stringify(list));
+    try {
+      await fetch(DRUM_FIREBASE, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(list)
+      });
+    } catch(e) {}
+    return list;
   }
-  function renderHiscores() {
-    const list = getHiscores();
+  async function renderHiscores() {
+    const list = await getHiscores();
     const el = document.getElementById('hiscoreList');
     if (!el) return;
     if (!list.length) { el.innerHTML = ''; return; }
@@ -876,12 +939,12 @@
         '</div>'
       ).join('');
   }
-  function showRecordPopup() {
+  async function showRecordPopup() {
     if (popupOpen) return;
     popupOpen = true;
     document.getElementById('popupScore').textContent = score;
     document.getElementById('nameInput').value = '';
-    renderHiscores();
+    await renderHiscores();
     document.getElementById('recordPopup').classList.add('show');
     setTimeout(function() {
       var inp = document.getElementById('nameInput');
@@ -892,11 +955,11 @@
     document.getElementById('recordPopup').classList.remove('show');
     popupOpen = false;
   }
-  function saveName() {
+  async function saveName() {
     var name = document.getElementById('nameInput').value.trim();
     if (!name) name = 'Anonym';
-    saveHiscore(name, score);
-    renderHiscores();
+    await saveHiscore(name, score);
+    await renderHiscores();
     setTimeout(closePopup, 1000);
   }
 
