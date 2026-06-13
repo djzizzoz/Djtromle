@@ -373,9 +373,9 @@
     el.style.left=(fromLeft?-70:W+10)+'px';
 
     // Speed — faster as time runs out
-    var speed=3+Math.random()*3;
+    var speed=1.5+Math.random()*2;
     var elapsed=30-timeLeft;
-    speed=Math.max(1.2, speed-(elapsed*0.05));
+    speed=Math.max(0.7, speed-(elapsed*0.04));
     el.style.transition=`left ${speed}s linear`;
     area.appendChild(el);
 
@@ -413,7 +413,7 @@
 
     // Next spawn — accelerates over time
     if(running){
-      var interval=Math.max(400, 1800-elapsed*38);
+      var interval=Math.max(220, 1000-elapsed*30);
       spawnTout=setTimeout(spawn,interval);
     }
   }
@@ -449,7 +449,7 @@
       if(timeLeft<=5) document.getElementById('timerBox').classList.add('warn');
       if(timeLeft<=0) endGame();
     },1000);
-    spawnTout=setTimeout(spawn,400);
+    spawnTout=setTimeout(spawn,200);
   }
 
   async function endGame(){
